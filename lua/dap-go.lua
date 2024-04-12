@@ -126,6 +126,7 @@ end
 function M.setup(opts)
   local config = vim.tbl_deep_extend("force", default_config, opts or {})
   M.test_buildflags = config.delve.build_flags
+  M.debug_config = config.debug_config
   local dap = load_module("dap")
   setup_delve_adapter(dap, config)
   setup_go_configuration(dap, config)
@@ -133,15 +134,25 @@ end
 
 local function debug_test(testname, testpath, build_flags)
   local dap = load_module("dap")
-  dap.run({
+
+  local test_args = { "-test.run", "^" .. testname .. "$" }
+
+  local debug_config = {
     type = "go",
     name = testname,
     request = "launch",
     mode = "test",
     program = testpath,
-    args = { "-test.run", "^" .. testname .. "$" },
+    args = test_args,
     buildFlags = build_flags,
-  })
+  }
+
+  if M.debug_config then
+    M.debug_config.args = vim.tbl_deep_extend("force", M.debug_config.args or {}, test_args)
+    M.debug_config.name = testname
+  end
+
+  dap.run(M.debug_config or debug_config)
 end
 
 function M.debug_test()
