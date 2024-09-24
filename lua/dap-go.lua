@@ -44,6 +44,46 @@ local function filtered_pick_process()
   return require("dap.utils").pick_process(opts)
 end
 
+local function file_from_path(filePath)
+  -- Placeholder expansion for launch directives
+  local placeholders = {
+    ["${file}"] = function(_)
+      return vim.fn.expand("%:p")
+    end,
+    ["${fileBasename}"] = function(_)
+      return vim.fn.expand("%:t")
+    end,
+    ["${fileBasenameNoExtension}"] = function(_)
+      return vim.fn.fnamemodify(vim.fn.expand("%:t"), ":r")
+    end,
+    ["${fileDirname}"] = function(_)
+      return vim.fn.expand("%:p:h")
+    end,
+    ["${fileExtname}"] = function(_)
+      return vim.fn.expand("%:e")
+    end,
+    ["${relativeFile}"] = function(_)
+      return vim.fn.expand("%:.")
+    end,
+    ["${relativeFileDirname}"] = function(_)
+      return vim.fn.fnamemodify(vim.fn.expand("%:.:h"), ":r")
+    end,
+    ["${workspaceFolder}"] = function(_)
+      return vim.fn.getcwd()
+    end,
+    ["${workspaceFolderBasename}"] = function(_)
+      return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
+    end,
+    ["${env:([%w_]+)}"] = function(match)
+      return os.getenv(match) or ""
+    end,
+  }
+  for key, fn in pairs(placeholders) do
+    filePath = filePath:gsub(key, fn)
+  end
+  return io.open(filePath, "r")
+end
+
 local function setup_delve_adapter(dap, config)
   local args = { "dap", "-l", "127.0.0.1:" .. config.delve.port }
   vim.list_extend(args, config.delve.args)
@@ -59,6 +99,40 @@ local function setup_delve_adapter(dap, config)
     options = {
       initialize_timeout_sec = config.delve.initialize_timeout_sec,
     },
+    enrich_config = function(finalConfig, on_config)
+      local final_config = vim.deepcopy(finalConfig)
+
+      if final_config.envFile then
+        local file
+        if type(final_config.envFile) == "function" then
+          local filePath = final_config.envFile()
+          file = file_from_path(filePath)
+        else
+          if type(final_config.envFile) == "table" then
+            for _, v in ipairs(final_config.envFile) do
+              file = file_from_path(v)
+              if file then
+                break
+              end
+            end
+          end
+
+          if file then
+            for line in file:lines() do
+              local words = {}
+              for word in string.gmatch(line, "[^=]+") do
+                table.insert(words, word)
+              end
+              if not final_config.env then
+                final_config.env = {}
+              end
+              final_config.env[words[1]] = words[2]
+            end
+          end
+        end
+        on_config(final_config)
+      end
+    end,
   }
 end
 
