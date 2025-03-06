@@ -211,7 +211,7 @@ require("dap-go").setup({
     dap_configurations = {
         {
             type = "go",
-            name = "Debug (Build Flags & Arguments)",
+            name = "Debug (With .env file)",
             request = "launch",
             program = "${file}",
             envFile = "${fileDirname}/.env",
@@ -229,7 +229,7 @@ require("dap-go").setup({
     dap_configurations = {
         {
             type = "go",
-            name = "Debug (Build Flags & Arguments)",
+            name = "Debug (With .env file)",
             request = "launch",
             program = "${file}",
             envFile = { "${fileDirname}/.env", "${fileDirname}/.env.development", "${fileDirname}/.env.dev" },
@@ -246,7 +246,7 @@ require("dap-go").setup({
     dap_configurations = {
         {
             type = "go",
-            name = "Debug (Build Flags & Arguments)",
+            name = "Debug (With .env file)",
             request = "launch",
             program = "${file}",
             envFile = function() return {"${fileDirname}/.env"} end,
