@@ -123,22 +123,18 @@ local function setup_delve_adapter(dap, config)
       local final_config = vim.deepcopy(finalConfig)
 
       if final_config.envFile then
-        local file
-        if type(final_config.envFile) == "function" then
-          local filePath = final_config.envFile()
-          file = file_from_path(filePath)
+        local files = {}
+        if type(final_config.envFile) == "table" then
+          files = final_config.envFile
         else
-          if type(final_config.envFile) == "table" then
-            for _, v in ipairs(final_config.envFile) do
-              file = file_from_path(v)
-              if file then
-                break
-              end
-            end
+          if type(final_config.envFile) == "string" then
+            files = { final_config.envFile }
           end
-
-          if file then
-            for line in file:lines() do
+        end
+        for _, file in ipairs(files) do
+          local resolved_file = file_from_path(file)
+          if resolved_file then
+            for line in resolved_file:lines() do
               local words = {}
               for word in string.gmatch(line, "[^=]+") do
                 table.insert(words, word)

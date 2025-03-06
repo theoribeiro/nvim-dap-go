@@ -204,7 +204,24 @@ VARIABLE1=value1
 VARIABLE2=value2
 ```
 
-1. Register a new option to debug using .env files. They will be added to the environment in the same order as listed
+1. Register a new option to debug using a .env file:
+
+```lua
+require("dap-go").setup({
+    dap_configurations = {
+        {
+            type = "go",
+            name = "Debug (Build Flags & Arguments)",
+            request = "launch",
+            program = "${file}",
+            envFile = "${fileDirname}/.env",
+            dlvCwd = "${fileDirname}",
+        },
+    }
+})
+```
+
+2. Register a new option to debug using a table of .env files. They will be added to the environment in the same order as listed
    with the last file taking precedence:
 
 ```lua
@@ -222,7 +239,7 @@ require("dap-go").setup({
 })
 ```
 
-2. You can also use a function to set up the envFile dynamically:
+3. You can also use a function to set up the envFile dynamically:
 
 ```lua
 require("dap-go").setup({
@@ -237,16 +254,13 @@ require("dap-go").setup({
         },
     }
 })
-
 ```
-
-````
 
 ## Mappings
 
 ```vimL
 nmap <silent> <leader>td :lua require('dap-go').debug_test()<CR>
-````
+```
 
 ## VSCode launch config
 
