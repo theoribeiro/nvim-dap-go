@@ -184,7 +184,7 @@ lua require('dap-go').setup {
 }
 ```
 
-1. Start `dlv` in headless mode. You can specify subcommands and flags after `--`, e.g.,
+2. Start `dlv` in headless mode. You can specify subcommands and flags after `--`, e.g.,
 
 ```sh
 dlv debug -l 127.0.0.1:38697 --headless ./main.go -- subcommand --myflag=xyz
@@ -193,11 +193,60 @@ dlv debug -l 127.0.0.1:38697 --headless ./main.go -- subcommand --myflag=xyz
 1. Call `:lua require('dap').continue()` to start debugging.
 1. Select the new registered option `Attach remote`.
 
+### Debugging with a .env file
+
+You can use a `.env` file to set environment variables for the debug session.
+
+`.env` files should be formatted as usual:
+
+```.sh
+VARIABLE1=value1
+VARIABLE2=value2
+```
+
+1. Register a new option to debug using .env files. They will be added to the environment in the same order as listed
+   with the last file taking precedence:
+
+```lua
+require("dap-go").setup({
+    dap_configurations = {
+        {
+            type = "go",
+            name = "Debug (Build Flags & Arguments)",
+            request = "launch",
+            program = "${file}",
+            envFile = { "${fileDirname}/.env", "${fileDirname}/.env.development", "${fileDirname}/.env.dev" },
+            dlvCwd = "${fileDirname}",
+        },
+    }
+})
+```
+
+2. You can also use a function to set up the envFile dynamically:
+
+```lua
+require("dap-go").setup({
+    dap_configurations = {
+        {
+            type = "go",
+            name = "Debug (Build Flags & Arguments)",
+            request = "launch",
+            program = "${file}",
+            envFile = function() return {"${fileDirname}/.env"} end,
+            dlvCwd = "${fileDirname}",
+        },
+    }
+})
+
+```
+
+````
+
 ## Mappings
 
 ```vimL
 nmap <silent> <leader>td :lua require('dap-go').debug_test()<CR>
-```
+````
 
 ## VSCode launch config
 
@@ -208,22 +257,23 @@ That allows for example to set the Delve port dynamically when you run a debug s
 
 ```json
 {
-    "version": "0.2.0",
-    "configurations": [
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Remote debug API server",
+      "type": "go",
+      "request": "attach",
+      "mode": "remote",
+      "port": 4444,
+      "host": "127.0.0.1",
+      "substitutePath": [
         {
-            "name": "Remote debug API server",
-            "type": "go",
-            "request": "attach",
-            "mode": "remote",
-            "port": 4444,
-            "host": "127.0.0.1",
-            "substitutePath": [
-                {
-                    "from": "${workspaceFolder}", "to": "/usr/src/app"
-                }
-            ]
+          "from": "${workspaceFolder}",
+          "to": "/usr/src/app"
         }
-    ]
+      ]
+    }
+  ]
 }
 ```
 
