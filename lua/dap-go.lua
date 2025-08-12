@@ -135,14 +135,13 @@ local function setup_delve_adapter(dap, config)
           local resolved_file = file_from_path(file)
           if resolved_file then
             for line in resolved_file:lines() do
-              local words = {}
-              for word in string.gmatch(line, "[^=]+") do
-                table.insert(words, word)
+              local key, value = line:match("^([^=]+)=(.*)$")
+              if key and value then
+                if not final_config.env then
+                  final_config.env = {}
+                end
+                final_config.env[key] = value
               end
-              if not final_config.env then
-                final_config.env = {}
-              end
-              final_config.env[words[1]] = words[2]
             end
           end
         end
