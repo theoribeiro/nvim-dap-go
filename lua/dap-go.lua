@@ -145,8 +145,8 @@ local function setup_delve_adapter(dap, config)
             end
           end
         end
-        on_config(final_config)
       end
+      on_config(final_config)
     end,
   }
 
@@ -270,10 +270,11 @@ local function debug_test(testname, testpath, build_flags, extra_args, custom_co
     name = testname,
     request = "launch",
     mode = "test",
-    program = testpath,
+    program = ".",
     args = { "-test.run", "^" .. testname .. "$" },
     buildFlags = build_flags,
     outputMode = "remote",
+    dlvCwd = testpath,
   }
   config = vim.tbl_deep_extend("force", config, custom_config or {})
 
